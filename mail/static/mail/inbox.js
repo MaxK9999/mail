@@ -32,7 +32,31 @@ function load_mailbox(mailbox) {
   // Show the mailbox name
   document.querySelector('#emails-view').innerHTML = `<h3>${mailbox.charAt(0).toUpperCase() + mailbox.slice(1)}</h3>`;
 
-  
+  const mailTable = document.createElement('table');
+  mailTable.className = "table table-hover";
+  const tbody = document.createElement('tbody');
+
+  fetch(`/emails/${mailbox}`)
+  .then(response => response.json())
+  .then(emails => {
+
+    // Print emails
+    emails.forEach(Email => {
+
+      const mailRow = document.createElement('tr');
+      mailRow.innerHTML = `
+        <td>To: ${Email.recipients}</td>
+        <td>${Email.subject}</td>
+        <td>${Email.body}</td>
+        <td>${Email.timestamp}</td>
+      `;
+      mailRow.addEventListener('click', view_mail(Email.id));
+
+      tbody.appendChild(mailRow);
+    });
+      mailTable.appendChild(tbody);
+      document.querySelector('#emails-view').append(mailTable);
+});
 }
 
 function send_mail(event) {
@@ -59,4 +83,8 @@ function send_mail(event) {
       load_mailbox('sent');
   });
 
+}
+
+function view_mail(id) {
+  console.log(id);
 }
