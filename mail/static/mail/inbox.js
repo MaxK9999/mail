@@ -11,11 +11,13 @@ document.addEventListener('DOMContentLoaded', function() {
   load_mailbox('inbox');
 });
 
+
 function compose_email() {
 
   // Show compose view and hide other views
   document.querySelector('#emails-view').style.display = 'none';
   document.querySelector('#compose-view').style.display = 'block';
+  document.querySelector('#emails-detail-view').style.display = 'none';
 
   // Clear out composition fields
   document.querySelector('#compose-recipients').value = '';
@@ -23,11 +25,12 @@ function compose_email() {
   document.querySelector('#compose-body').value = '';
 }
 
+
 function load_mailbox(mailbox) {
-  
   // Show the mailbox and hide other views
   document.querySelector('#emails-view').style.display = 'block';
   document.querySelector('#compose-view').style.display = 'none';
+  document.querySelector('#emails-detail-view').style.display = 'none';
 
   // Show the mailbox name
   document.querySelector('#emails-view').innerHTML = `<h3>${mailbox.charAt(0).toUpperCase() + mailbox.slice(1)}</h3>`;
@@ -37,27 +40,59 @@ function load_mailbox(mailbox) {
   const tbody = document.createElement('tbody');
 
   fetch(`/emails/${mailbox}`)
-  .then(response => response.json())
-  .then(emails => {
+    .then(response => response.json())
+    .then(emails => {
+      emails.forEach(Email => {
+        const mailRow = document.createElement('tr');
+        mailRow.innerHTML = `
+          <td>From: ${Email.sender}</td>
+          <td>${Email.subject}</td>
+          <td>${Email.body}</td>
+          <td>${Email.timestamp}</td>
+        `;
+        // Add click functionality for email viewing
+        mailRow.addEventListener('click', function() {
+          view_mail(Email.id);
 
-    // Print emails
-    emails.forEach(Email => {
+          // Change background if read
+          if (!Email.read) {
+            mark_read(Email.id);
+          }
 
-      const mailRow = document.createElement('tr');
-      mailRow.innerHTML = `
-        <td>To: ${Email.recipients}</td>
-        <td>${Email.subject}</td>
-        <td>${Email.body}</td>
-        <td>${Email.timestamp}</td>
-      `;
-      mailRow.addEventListener('click', view_mail(Email.id));
+          // Highlight the row
+          mailRow.classList.add('selected');
+        });
 
-      tbody.appendChild(mailRow);
-    });
+        // Add 'read' or 'unread' class based on the status
+        mailRow.classList.toggle('read', Email.read);
+        mailRow.classList.toggle('unread', !Email.read);
+
+        tbody.appendChild(mailRow);
+      });
       mailTable.appendChild(tbody);
-      document.querySelector('#emails-view').append(mailTable);
-});
+      document.querySelector('#emails-view').appendChild(mailTable);
+    });
 }
+
+
+// Function to mark an email as read
+function mark_read(emailId) {
+  fetch(`/emails/${emailId}/mark_read`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify()
+  })
+  .then(response => {
+    if (response.status === 200) {
+      console.log('Email marked as read');
+    } else {
+      console.error('Failed to mark email as read.');
+    }
+  });
+}
+
 
 function send_mail(event) {
   event.preventDefault();
@@ -85,6 +120,46 @@ function send_mail(event) {
 
 }
 
+
 function view_mail(id) {
-  console.log(id);
+  fetch(`/emails/${id}`)
+  .then(response => response.json())
+  .then(email => {
+    console.log(email);
+    load_mailbox('inbox');
+
+    document.querySelector('#emails-view').style.display = 'none';
+    document.querySelector('#compose-view').style.display = 'none';
+    document.querySelector('#emails-detail-view').style.display = 'block';
+
+    const emailDetail = document.createElement('div');
+    emailDetail.innerHTML = `
+    <h3>Email Details</h3>
+    <div class="form-group">
+      From: <input disabled class="form-control" value="${email.sender}">
+    </div>
+    <div class="form-group">
+      To: <input disabled class="form-control" value="${email.recipients.join(', ')}">
+    </div>
+    <div class="form-group">
+      Subject: <input disabled class="form-control" value="${email.subject}">
+    </div>
+    <div class="form-group">
+      Body: <textarea disabled class="form-control">${email.body}</textarea>
+    </div>
+    `;
+
+    document.querySelector('#emails-detail-view').innerHTML = '';
+    document.querySelector('#emails-detail-view').appendChild(emailDetail);
+
+    if (!email.read) {
+      fetch(`/emails/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+            read: true
+        })
+      })
+    }
+  });
 }
+

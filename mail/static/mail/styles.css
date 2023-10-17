@@ -1,3 +1,27 @@
 textarea {
     min-height: 400px;
 }
+
+body {
+    background-image: url(pictures/pexels-stephan-seeber-1054218.jpg);
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+}
+
+table tr{
+    transition: 0.4s;
+}
+
+table tr:hover {
+    background-color: rgba(176, 176, 176, .6); 
+    transition: 0.4s;
+}
+
+.read {
+    background-color: rgba(173, 173, 173, .6);
+}
+
+.unread {
+    background-color: rgba(255, 255, 255, .6);
+}
