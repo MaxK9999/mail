@@ -36,7 +36,7 @@ function load_mailbox(mailbox) {
   document.querySelector('#emails-view').innerHTML = `<h3>${mailbox.charAt(0).toUpperCase() + mailbox.slice(1)}</h3>`;
 
   const mailTable = document.createElement('table');
-  mailTable.className = "table table-hover";
+  mailTable.className = "table table-borderless table-hover";
   const tbody = document.createElement('tbody');
 
   fetch(`/emails/${mailbox}`)
@@ -52,7 +52,7 @@ function load_mailbox(mailbox) {
         `;
         // Add click functionality for email viewing
         mailRow.addEventListener('click', function() {
-          view_mail(Email.id);
+          view_mail(Email.id, mailbox);
 
           // Change background if read
           if (!Email.read) {
@@ -72,25 +72,6 @@ function load_mailbox(mailbox) {
       mailTable.appendChild(tbody);
       document.querySelector('#emails-view').appendChild(mailTable);
     });
-}
-
-
-// Function to mark an email as read
-function mark_read(emailId) {
-  fetch(`/emails/${emailId}/mark_read`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify()
-  })
-  .then(response => {
-    if (response.status === 200) {
-      console.log('Email marked as read');
-    } else {
-      console.error('Failed to mark email as read.');
-    }
-  });
 }
 
 
@@ -121,7 +102,7 @@ function send_mail(event) {
 }
 
 
-function view_mail(id) {
+function view_mail(id, mailbox) {
   fetch(`/emails/${id}`)
   .then(response => response.json())
   .then(email => {
@@ -152,6 +133,7 @@ function view_mail(id) {
     document.querySelector('#emails-detail-view').innerHTML = '';
     document.querySelector('#emails-detail-view').appendChild(emailDetail);
 
+    // Email read or unread logic
     if (!email.read) {
       fetch(`/emails/${id}`, {
         method: 'PUT',
@@ -160,6 +142,40 @@ function view_mail(id) {
         })
       })
     }
+
+    // Archiving emails 
+    if (mailbox !== 'sent') {
+      const archive = document.createElement('button');
+      archive.innerHTML = email.archived ? "unarchive": "archive";
+      archive.className = email.archived ? "btn btn-danger": "btn btn-success";
+      archive.addEventListener('click', function() {
+        fetch(`/emails/${email.id}`, {
+          method: 'PUT',
+          body: JSON.stringify({
+            archived: !email.archived
+          })
+        })
+        .then(() => {
+          load_mailbox('archive')
+        })
+      });
+      document.querySelector('#emails-detail-view').append(archive);
+
+      // Reply to emails
+      const reply = document.createElement('button');
+      reply.innerHTML = "reply";
+      reply.className = "btn btn-info";
+      reply.addEventListener('click', function() {
+        compose_email();
+
+        document.querySelector('#compose-recipients').value = email.sender;
+
+        const originalSubject = email.subject;
+        let replySubject = originalSubject.startsWith("Re: ") ? originalSubject: `Re: ${originalSubject}`;
+        document.querySelector('#compose-subject').value = replySubject;
+        document.querySelector('#compose-body').value = `On ${email.timestamp} ${email.sender} wrote ${email.body}`;
+      });
+      document.querySelector('#emails-detail-view').append(reply);
+    }
   });
 }
-

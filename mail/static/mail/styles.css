@@ -3,19 +3,28 @@ textarea {
 }
 
 body {
+    padding: 30px;
     background-image: url(pictures/pexels-stephan-seeber-1054218.jpg);
     background-size: cover;
     background-repeat: no-repeat;
     background-attachment: fixed;
+    overflow-x: hidden;
 }
 
-table tr{
+table tr {
     transition: 0.4s;
 }
 
 table tr:hover {
-    background-color: rgba(176, 176, 176, .6); 
+    color: aliceblue !important;
     transition: 0.4s;
+}
+
+table td {
+    max-width: 25vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .read {
@@ -23,5 +32,18 @@ table tr:hover {
 }
 
 .unread {
-    background-color: rgba(255, 255, 255, .6);
+    background-color: rgba(255, 255, 255, .8);
+}
+
+button {
+    margin-right: 10px;
+}
+
+a {
+    color: black;
+}
+
+a:hover {
+    text-decoration: underline;
+    color: black;
 }
